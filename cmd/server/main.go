@@ -14,6 +14,7 @@ import (
 func main() {
 	database.Connect()
 	createDefaultAdmin()
+	seedDatabase() // Add seed data
 
 	r := gin.Default()
 	r.LoadHTMLGlob("web/templates/*.html")
@@ -26,11 +27,10 @@ func main() {
 	r.GET("/status/:order_no", handlers.ShowStatusPage)
 
 	// --- Storefront API ---
-	r.GET("/api/products", handlers.GetPublicProducts) // Renamed for clarity
+	r.GET("/api/products", handlers.GetPublicProducts)
 	r.POST("/api/orders", handlers.CreateOrder)
 	r.GET("/api/orders/:order_no", handlers.GetOrderStatus)
 	r.GET("/api/coupons/verify", handlers.VerifyCoupon)
-
 
 	// --- Admin HTML Pages ---
 	adminPages := r.Group("/admin")
@@ -68,7 +68,6 @@ func main() {
 	adminApi := r.Group("/admin/api")
 	{
 		adminApi.POST("/login", handlers.Login)
-
 		authApi := adminApi.Group("")
 		authApi.Use(handlers.AuthRequired)
 		{
@@ -112,4 +111,43 @@ func createDefaultAdmin() {
 		admin := models.User{Username: "admin", Password: string(hashedPassword)}
 		database.DB.Create(&admin)
 	}
+}
+
+func seedDatabase() {
+	var productCount int64
+	database.DB.Model(&models.Product{}).Count(&productCount)
+	if productCount > 0 {
+		return // Database already seeded
+	}
+
+	// Seed Categories
+	cat1 := models.Category{Name: "Software Licenses"}
+	cat2 := models.Category{Name: "Game Keys"}
+	database.DB.Create(&cat1)
+	database.DB.Create(&cat2)
+
+	// Seed Products
+	prod1 := models.Product{Name: "IDE Pro License", Price: 99.99, CategoryID: cat1.ID, Description: "A professional IDE for developers."}
+	prod2 := models.Product{Name: "OS License Key", Price: 129.50, CategoryID: cat1.ID, Description: "The latest version of the OS."}
+	prod3 := models.Product{Name: "Indie Adventure Game", Price: 19.99, CategoryID: cat2.ID, Description: "An exciting adventure game."}
+	database.DB.Create(&prod1)
+	database.DB.Create(&prod2)
+	database.DB.Create(&prod3)
+
+	// Seed Stock
+	stock1 := []models.ProductStock{
+		{ProductID: prod1.ID, Key: "IDE-PRO-KEY-1111-AAAA"},
+		{ProductID: prod1.ID, Key: "IDE-PRO-KEY-2222-BBBB"},
+	}
+	stock2 := []models.ProductStock{
+		{ProductID: prod2.ID, Key: "OS-LICENSE-KEY-3333-CCCC"},
+	}
+	stock3 := []models.ProductStock{
+		{ProductID: prod3.ID, Key: "INDIE-GAME-KEY-4444-DDDD"},
+		{ProductID: prod3.ID, Key: "INDIE-GAME-KEY-5555-EEEE"},
+		{ProductID: prod3.ID, Key: "INDIE-GAME-KEY-6666-FFFF"},
+	}
+	database.DB.Create(&stock1)
+	database.DB.Create(&stock2)
+	database.DB.Create(&stock3)
 }
