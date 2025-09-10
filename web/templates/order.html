@@ -64,7 +64,7 @@
             const result = await response.json();
 
             if (response.ok) {
-                window.location.href = `/status/${result.OrderNo}`;
+                window.location.href = `/payment/redirect/${result.OrderNo}`;
             } else {
                 messageArea.className = 'error';
                 messageArea.textContent = result.error || 'Failed to place order.';

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"auto-vending-system/internal/database"
+	"auto-vending-system/internal/email"
 	"auto-vending-system/internal/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -29,7 +30,6 @@ func GetSettings(c *gin.Context) {
 	var settings []models.Setting
 	database.DB.Find(&settings)
 
-	// Convert to a map for easier use on the frontend
 	settingsMap := make(map[string]string)
 	for _, s := range settings {
 		settingsMap[s.Key] = s.Value
@@ -47,7 +47,6 @@ func UpdateSettings(c *gin.Context) {
 	}
 
 	for key, value := range input {
-		// Use FirstOrCreate to either update the existing setting or create it if it doesn't exist.
 		setting := models.Setting{Key: key}
 		database.DB.FirstOrCreate(&setting, models.Setting{Key: key})
 		database.DB.Model(&setting).Update("value", value)
@@ -56,16 +55,23 @@ func UpdateSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Settings updated successfully"})
 }
 
-// EmailTest sends a test email (simulation).
+type EmailTestInput struct {
+	To string `json:"to" binding:"required,email"`
+}
+
+// EmailTest sends a real test email to the specified address.
 func EmailTest(c *gin.Context) {
-	// In a real application, this would use the settings from the database
-	// to configure an SMTP client and send an email.
-	// For this simulation, we just log that the function was called.
+	var input EmailTestInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email address provided."})
+		return
+	}
 
-	// Example of how you might get a setting:
-	// var mailHost models.Setting
-	// database.DB.Where("key = ?", "mail_host").First(&mailHost)
-	// log.Printf("Simulating sending test email to host: %s", mailHost.Value)
+	err := email.SendEmail(input.To, "Test Email", "This is a test email from the vending system.")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send test email: " + err.Error()})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Test email sent (simulation)!"})
+	c.JSON(http.StatusOK, gin.H{"message": "Test email sent successfully to " + input.To + "!"})
 }

@@ -32,6 +32,10 @@ func main() {
 	r.GET("/api/orders/:order_no", handlers.GetOrderStatus)
 	r.GET("/api/coupons/verify", handlers.VerifyCoupon)
 
+	// --- Payment Flow ---
+	r.GET("/payment/redirect/:order_no", handlers.RedirectToPayment)
+	r.GET("/payment/notify", handlers.NotifyHandler)
+
 	// --- Admin HTML Pages ---
 	adminPages := r.Group("/admin")
 	{

@@ -5,16 +5,32 @@ import (
 	"auto-vending-system/internal/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
-// ShowCouponsPage renders the page that lists all coupons.
+// ShowCouponsPage renders the page that lists all coupons with pagination.
 func ShowCouponsPage(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit := 10
+
 	var coupons []models.Coupon
-	database.DB.Find(&coupons)
+	var total int64
+
+	database.DB.Model(&models.Coupon{}).Count(&total)
+	offset := (page - 1) * limit
+	database.DB.Offset(offset).Limit(limit).Find(&coupons)
+
 	c.HTML(http.StatusOK, "coupons.html", gin.H{
 		"title":      "Coupons",
 		"active_nav": "coupons",
 		"coupons":    coupons,
+		"total":      total,
+		"page":       page,
+		"limit":      limit,
+		"prev_page":  page - 1,
+		"next_page":  page + 1,
+		"has_prev":   page > 1,
+		"has_next":   (int64(page) * int64(limit)) < total,
 	})
 }
 
@@ -32,7 +48,10 @@ func ShowEditCouponForm(c *gin.Context) {
 	id := c.Param("id")
 	var coupon models.Coupon
 	if err := database.DB.First(&coupon, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Coupon not found"})
+		c.HTML(http.StatusNotFound, "error.html", gin.H{
+			"title": "Error",
+			"error": "Coupon not found",
+		})
 		return
 	}
 	c.HTML(http.StatusOK, "coupon_form.html", gin.H{

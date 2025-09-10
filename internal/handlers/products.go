@@ -5,16 +5,32 @@ import (
 	"auto-vending-system/internal/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
-// ShowProductsPage renders the page that lists all products.
+// ShowProductsPage renders the page that lists all products with pagination.
 func ShowProductsPage(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit := 10 // Items per page
+
 	var products []models.Product
-	database.DB.Preload("Category").Find(&products)
+	var total int64
+
+	database.DB.Model(&models.Product{}).Count(&total)
+	offset := (page - 1) * limit
+	database.DB.Preload("Category").Offset(offset).Limit(limit).Find(&products)
+
 	c.HTML(http.StatusOK, "products.html", gin.H{
-		"title":      "Products",
-		"active_nav": "products",
-		"products":   products,
+		"title":       "Products",
+		"active_nav":  "products",
+		"products":    products,
+		"total":       total,
+		"page":        page,
+		"limit":       limit,
+		"prev_page":   page - 1,
+		"next_page":   page + 1,
+		"has_prev":    page > 1,
+		"has_next":    (int64(page) * int64(limit)) < total,
 	})
 }
 
@@ -35,7 +51,10 @@ func ShowEditProductForm(c *gin.Context) {
 	id := c.Param("id")
 	var product models.Product
 	if err := database.DB.First(&product, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		c.HTML(http.StatusNotFound, "error.html", gin.H{
+			"title": "Error",
+			"error": "Product not found",
+		})
 		return
 	}
 	var categories []models.Category
@@ -53,7 +72,10 @@ func ShowStockPage(c *gin.Context) {
 	id := c.Param("id")
 	var product models.Product
 	if err := database.DB.First(&product, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		c.HTML(http.StatusNotFound, "error.html", gin.H{
+			"title": "Error",
+			"error": "Product not found",
+		})
 		return
 	}
 	var stock []models.ProductStock

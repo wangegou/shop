@@ -43,6 +43,16 @@
         </tbody>
     </table>
 
+    <div class="pagination">
+        {{if .has_prev}}
+            <a href="/admin/products?page={{.prev_page}}">&laquo; Previous</a>
+        {{end}}
+        <span>Page {{.page}}</span>
+        {{if .has_next}}
+            <a href="/admin/products?page={{.next_page}}">Next &raquo;</a>
+        {{end}}
+    </div>
+
     <script>
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', async function() {
