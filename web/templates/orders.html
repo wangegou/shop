@@ -1,0 +1,42 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<style>
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #dee2e6; padding: 0.75rem; text-align: left; }
+    th { background-color: #e9ecef; }
+    .status-paid { color: #28a745; font-weight: bold; }
+    .status-pending { color: #ffc107; }
+</style>
+
+<table>
+    <thead>
+        <tr>
+            <th>Order No</th>
+            <th>Email</th>
+            <th>Product</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .orders}}
+        <tr>
+            <td>{{.OrderNo}}</td>
+            <td>{{.Email}}</td>
+            <td>{{.Product.Name}}</td>
+            <td>{{.Total}}</td>
+            <td>
+                <span class="status-{{.Status}}">{{.Status}}</span>
+            </td>
+            <td>{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+        </tr>
+        {{else}}
+        <tr>
+            <td colspan="6">No orders found.</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}

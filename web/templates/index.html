@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Goods Store</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; color: #333; margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 3rem; }
+        header h1 { font-size: 2.5rem; }
+        .category { margin-bottom: 3rem; }
+        .category h2 { border-bottom: 2px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+        .product-card { background-color: white; border: 1px solid #ddd; border-radius: 5px; padding: 1.5rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .product-card h3 { margin-top: 0; }
+        .product-card .price { font-size: 1.5rem; font-weight: bold; color: #007bff; margin: 1rem 0; }
+        .product-card .buy-btn { display: inline-block; background-color: #28a745; color: white; padding: 0.7rem 1.5rem; text-decoration: none; border-radius: 4px; }
+        #loading { text-align: center; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome to Our Store</h1>
+            <p>Your one-stop shop for digital goods.</p>
+        </header>
+
+        <div id="store-content">
+            <!-- Products will be loaded here by JavaScript -->
+        </div>
+        <div id="loading">Loading products...</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const storeContent = document.getElementById('store-content');
+            const loadingDiv = document.getElementById('loading');
+
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) {
+                    throw new Error('Failed to load products.');
+                }
+                const categories = await response.json();
+                loadingDiv.style.display = 'none';
+
+                if (!categories || categories.length === 0) {
+                    storeContent.innerHTML = '<p>No products available at the moment. Please check back later.</p>';
+                    return;
+                }
+
+                categories.forEach(category => {
+                    if (category.Products && category.Products.length > 0) {
+                        const categorySection = document.createElement('section');
+                        categorySection.className = 'category';
+
+                        const categoryTitle = document.createElement('h2');
+                        categoryTitle.textContent = category.Name;
+                        categorySection.appendChild(categoryTitle);
+
+                        const productGrid = document.createElement('div');
+                        productGrid.className = 'product-grid';
+
+                        category.Products.forEach(product => {
+                            const productCard = document.createElement('div');
+                            productCard.className = 'product-card';
+                            productCard.innerHTML = `
+                                <h3>${product.Name}</h3>
+                                <p>${product.Description || ''}</p>
+                                <div class="price">$${product.Price.toFixed(2)}</div>
+                                <a href="/order/${product.ID}" class="buy-btn">Buy Now</a>
+                            `;
+                            productGrid.appendChild(productCard);
+                        });
+
+                        categorySection.appendChild(productGrid);
+                        storeContent.appendChild(categorySection);
+                    }
+                });
+
+            } catch (error) {
+                loadingDiv.textContent = 'Error loading products. Please try refreshing the page.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Status</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f4f4f4; text-align: center; }
+        .status-box { background-color: white; padding: 3rem; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; }
+        #status-text { font-size: 1.2rem; font-weight: bold; }
+        #key-area { margin-top: 2rem; display: none; }
+        #purchased-key { background-color: #e9ecef; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 1.1rem; word-break: break-all; }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #007bff;
+            animation: spin 1s ease infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-box">
+        <h2>Your Order Status</h2>
+        <p><strong>Order #{{ .order_no }}</strong></p>
+        <div id="status-text">Checking status...</div>
+        <div class="spinner" id="spinner"></div>
+        <div id="key-area">
+            <h3>Your Purchased Key:</h3>
+            <div id="purchased-key"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const orderNo = '{{ .order_no }}';
+            const statusText = document.getElementById('status-text');
+            const keyArea = document.getElementById('key-area');
+            const purchasedKey = document.getElementById('purchased-key');
+            const spinner = document.getElementById('spinner');
+
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`/api/orders/${orderNo}`);
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        statusText.textContent = `Status: ${data.status}`;
+                        if (data.status === 'paid') {
+                            keyArea.style.display = 'block';
+                            purchasedKey.textContent = data.key;
+                            spinner.style.display = 'none';
+                            // Stop polling once the key is received
+                            return;
+                        }
+                    } else {
+                        statusText.textContent = data.error || 'Could not retrieve order status.';
+                        spinner.style.display = 'none';
+                        return; // Stop polling on error
+                    }
+                } catch (error) {
+                    statusText.textContent = 'Error checking status.';
+                    spinner.style.display = 'none';
+                    return; // Stop polling on error
+                }
+                // If not paid, poll again after 3 seconds
+                setTimeout(checkStatus, 3000);
+            };
+
+            // Initial check
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

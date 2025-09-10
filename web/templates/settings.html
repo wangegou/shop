@@ -1,0 +1,104 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<style>
+    .form-container { max-width: 800px; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    input, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px; }
+    textarea { min-height: 150px; }
+    .form-actions { margin-top: 1.5rem; }
+    .form-actions button { padding: 0.7rem 1.5rem; border: none; border-radius: 3px; cursor: pointer; background-color: #007bff; color: white; }
+    #email-test-btn { background-color: #17a2b8; }
+</style>
+
+<div class="form-container">
+    <form id="settings-form">
+        <h3>System Settings</h3>
+        <div class="form-group">
+            <label for="site_name">Site Name</label>
+            <input type="text" id="site_name" name="site_name" value="{{.settings.site_name}}">
+        </div>
+
+        <h3>Payment Settings (Mock)</h3>
+        <div class="form-group">
+            <label for="payment_api_key">API Key</label>
+            <input type="text" id="payment_api_key" name="payment_api_key" value="{{.settings.payment_api_key}}">
+        </div>
+
+        <h3>Email Settings</h3>
+        <div class="form-group">
+            <label for="mail_host">Mail Host</label>
+            <input type="text" id="mail_host" name="mail_host" value="{{.settings.mail_host}}">
+        </div>
+        <div class="form-group">
+            <label for="mail_port">Mail Port</label>
+            <input type="text" id="mail_port" name="mail_port" value="{{.settings.mail_port}}">
+        </div>
+        <div class="form-group">
+            <label for="mail_username">Username</label>
+            <input type="text" id="mail_username" name="mail_username" value="{{.settings.mail_username}}">
+        </div>
+        <div class="form-group">
+            <label for="mail_password">Password</label>
+            <input type="password" id="mail_password" name="mail_password" value="{{.settings.mail_password}}">
+        </div>
+        <div class="form-group">
+            <label for="mail_from_address">From Address</label>
+            <input type="email" id="mail_from_address" name="mail_from_address" value="{{.settings.mail_from_address}}">
+        </div>
+        <div class="form-group">
+            <label for="email_template">Email Template</label>
+            <textarea id="email_template" name="email_template">{{.settings.email_template}}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Save Settings</button>
+            <button type="button" id="email-test-btn">Send Test Email</button>
+        </div>
+    </form>
+    <div id="message" style="margin-top: 1rem;"></div>
+</div>
+
+<script>
+    document.getElementById('settings-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = '';
+
+        const response = await fetch('/admin/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            messageDiv.style.color = 'green';
+            messageDiv.textContent = result.message || 'Settings saved!';
+        } else {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = result.error || 'Failed to save settings.';
+        }
+    });
+
+    document.getElementById('email-test-btn').addEventListener('click', async function() {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = '';
+
+        const response = await fetch('/admin/api/email/test', { method: 'POST' });
+        const result = await response.json();
+
+        if (response.ok) {
+            messageDiv.style.color = 'blue';
+            messageDiv.textContent = result.message;
+        } else {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = result.error || 'Failed to send test email.';
+        }
+    });
+</script>
+{{end}}
