@@ -1,0 +1,57 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+    <style>
+        .form-container { max-width: 600px; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px; }
+        .form-actions { margin-top: 1.5rem; }
+        .form-actions button { padding: 0.7rem 1.5rem; border: none; border-radius: 3px; cursor: pointer; }
+        .form-actions .save-btn { background-color: #007bff; color: white; }
+        .form-actions a { text-decoration: none; color: #6c757d; margin-left: 1rem; }
+    </style>
+
+    <div class="form-container">
+        <form id="category-form">
+            <div class="form-group">
+                <label for="name">Category Name</label>
+                <input type="text" id="name" name="name" value="{{ .category.Name }}" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="save-btn">Save</button>
+                <a href="/admin/categories">Cancel</a>
+            </div>
+        </form>
+        <div id="error-message" style="color: red; margin-top: 1rem;"></div>
+    </div>
+
+    <script>
+        document.getElementById('category-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const name = this.name.value;
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = '';
+
+            const isEdit = {{.category.ID}} > 0;
+            let url = '/admin/api/categories';
+            if (isEdit) {
+                url = `/admin/api/categories/{{.category.ID}}`;
+            }
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+
+            if (response.ok) {
+                window.location.href = '/admin/categories';
+            } else {
+                const data = await response.json();
+                errorMessage.textContent = data.error || 'Failed to save category.';
+            }
+        });
+    </script>
+{{end}}

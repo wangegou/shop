@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .title }} - Admin Panel</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; display: flex; background-color: #f8f9fa; }
+        .sidebar { width: 220px; background-color: #343a40; color: white; height: 100vh; padding: 1rem; }
+        .sidebar h2 { color: white; text-align: center; margin-bottom: 2rem; }
+        .sidebar ul { list-style-type: none; padding: 0; }
+        .sidebar ul li a { color: #adb5bd; text-decoration: none; display: block; padding: 0.75rem 1rem; border-radius: 4px; }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background-color: #495057; color: white; }
+        .main-content { flex-grow: 1; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; padding-bottom: 1rem; margin-bottom: 2rem; }
+        .header h1 { margin: 0; }
+        #logout-btn { background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Admin</h2>
+        <ul>
+            <li><a href="/admin/dashboard" class="{{ if eq .active_nav "dashboard" }}active{{ end }}">Dashboard</a></li>
+            <li><a href="/admin/categories" class="{{ if eq .active_nav "categories" }}active{{ end }}">Categories</a></li>
+            <li><a href="/admin/products" class="{{ if eq .active_nav "products" }}active{{ end }}">Products</a></li>
+            <li><a href="/admin/orders" class="{{ if eq .active_nav "orders" }}active{{ end }}">Orders</a></li>
+            <li><a href="/admin/coupons" class="{{ if eq .active_nav "coupons" }}active{{ end }}">Coupons</a></li>
+            <li><a href="/admin/settings" class="{{ if eq .active_nav "settings" }}active{{ end }}">Settings</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="header">
+            <h1>{{ .title }}</h1>
+            <button id="logout-btn">Logout</button>
+        </div>
+        <div class="content-body">
+            {{template "content" .}}
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await fetch('/admin/logout', { method: 'POST' });
+            window.location.href = '/admin/login';
+        });
+    </script>
+</body>
+</html>

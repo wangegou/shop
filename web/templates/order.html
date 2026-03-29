@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Complete Your Order</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f4f4f4; }
+        .container { max-width: 500px; width: 100%; }
+        .order-box { background-color: white; padding: 2rem; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; margin-bottom: 1.5rem; }
+        .product-info { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input { width: 95%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px; }
+        button { width: 100%; padding: 0.7rem; border: none; background-color: #28a745; color: white; border-radius: 3px; cursor: pointer; font-size: 1.1em; }
+        .error, .message { margin-top: 1rem; text-align: center; }
+        .error { color: red; }
+        .message { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="order-box">
+            <h2>Complete Your Order</h2>
+            <div class="product-info">
+                <h3>{{ .product.Name }}</h3>
+                <p>{{ .product.Description }}</p>
+                <p><strong>Price:</strong> ${{ .product.Price }}</p>
+            </div>
+            <form id="order-form">
+                <div class="form-group">
+                    <label for="email">Email Address (to receive your key)</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="coupon_code">Coupon Code (optional)</label>
+                    <input type="text" id="coupon_code" name="coupon_code">
+                </div>
+                <button type="submit">Purchase</button>
+            </form>
+            <div id="message-area" class="message"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('order-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const messageArea = document.getElementById('message-area');
+            messageArea.textContent = '';
+            messageArea.className = 'message';
+
+            const data = {
+                product_id: {{.product.ID}},
+                email: this.email.value,
+                coupon_code: this.coupon_code.value,
+            };
+
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                window.location.href = `/payment/redirect/${result.OrderNo}`;
+            } else {
+                messageArea.className = 'error';
+                messageArea.textContent = result.error || 'Failed to place order.';
+            }
+        });
+    </script>
+</body>
+</html>

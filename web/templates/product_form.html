@@ -1,0 +1,81 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<style>
+    .form-container { max-width: 600px; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px; }
+    textarea { min-height: 100px; }
+    .form-actions { margin-top: 1.5rem; }
+    .form-actions button { padding: 0.7rem 1.5rem; border: none; border-radius: 3px; cursor: pointer; }
+    .form-actions .save-btn { background-color: #007bff; color: white; }
+    .form-actions a { text-decoration: none; color: #6c757d; margin-left: 1rem; }
+</style>
+
+<div class="form-container">
+    <form id="product-form">
+        <div class="form-group">
+            <label for="name">Product Name</label>
+            <input type="text" id="name" name="name" value="{{.product.Name}}" required>
+        </div>
+        <div class="form-group">
+            <label for="category_id">Category</label>
+            <select id="category_id" name="category_id" required>
+                {{range .categories}}
+                <option value="{{.ID}}" {{if eq .ID $.product.CategoryID}}selected{{end}}>{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" id="price" name="price" step="0.01" value="{{.product.Price}}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description">{{.product.Description}}</textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="save-btn">Save</button>
+            <a href="/admin/products">Cancel</a>
+        </div>
+    </form>
+    <div id="error-message" style="color: red; margin-top: 1rem;"></div>
+</div>
+
+<script>
+    document.getElementById('product-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const data = {
+            name: formData.get('name'),
+            description: formData.get('description'),
+            price: parseFloat(formData.get('price')),
+            category_id: parseInt(formData.get('category_id')),
+        };
+
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = '';
+
+        const isEdit = {{.product.ID}} > 0;
+        let url = '/admin/api/products';
+        if (isEdit) {
+            url = `/admin/api/products/{{.product.ID}}`;
+        }
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            window.location.href = '/admin/products';
+        } else {
+            const result = await response.json();
+            errorMessage.textContent = result.error || 'Failed to save product.';
+        }
+    });
+</script>
+{{end}}

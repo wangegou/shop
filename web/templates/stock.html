@@ -1,0 +1,94 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<style>
+    .stock-container { max-width: 800px; }
+    .form-container { margin-bottom: 2rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    textarea { width: 100%; min-height: 120px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px; }
+    .form-actions button { padding: 0.7rem 1.5rem; border: none; border-radius: 3px; cursor: pointer; background-color: #007bff; color: white; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #dee2e6; padding: 0.75rem; text-align: left; }
+    th { background-color: #e9ecef; }
+    .status-sold { color: #dc3545; }
+    .status-available { color: #28a745; }
+</style>
+
+<div class="stock-container">
+    <h3>Add Stock for: {{ .product.Name }}</h3>
+    <div class="form-container">
+        <form id="stock-form">
+            <div class="form-group">
+                <label for="keys">Enter keys (one per line)</label>
+                <textarea id="keys" name="keys" required></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit">Add Stock</button>
+            </div>
+        </form>
+        <div id="error-message" style="color: red; margin-top: 1rem;"></div>
+    </div>
+
+    <h3>Existing Stock</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Key</th>
+                <th>Status</th>
+                <th>Added At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .stock}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Key}}</td>
+                <td>
+                    {{if .IsSold}}
+                        <span class="status-sold">Sold</span>
+                    {{else}}
+                        <span class="status-available">Available</span>
+                    {{end}}
+                </td>
+                <td>{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="4">No stock found for this product.</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.getElementById('stock-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const keysText = this.keys.value.trim();
+        const keys = keysText.split('\\n').filter(k => k); // Split by newline and remove empty lines
+
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = '';
+
+        if (keys.length === 0) {
+            errorMessage.textContent = 'Please enter at least one key.';
+            return;
+        }
+
+        const response = await fetch(`/admin/api/products/{{.product.ID}}/stock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keys })
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const result = await response.json();
+            errorMessage.textContent = result.error || 'Failed to add stock.';
+        }
+    });
+</script>
+{{end}}
